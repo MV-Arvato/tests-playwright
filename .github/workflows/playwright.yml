@@ -27,3 +27,23 @@ jobs:
         name: playwright-report
         path: playwright-report/
         retention-days: 30
+    - name: Prepare report for commit
+      if: ${{ github.ref == 'refs/heads/main' }}
+      run: |
+        rm -rf temp-docs
+        mkdir -p temp-docs
+        cp -r playwright-report/* temp-docs/
+    - name: Commit report to docs/
+      if: ${{ github.ref == 'refs/heads/main' }}
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+        git fetch origin main
+        git checkout main
+
+        mkdir -p docs
+        cp -r temp-docs/* docs/
+        git add docs/
+        git commit -m "Update Playwright report [skip ci]" || echo "No changes to commit"
+        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
