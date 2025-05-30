@@ -48,15 +48,25 @@ jobs:
         continue-on-error: true
         run: npx playwright test
 
+      - name: List Playwright report folder contents
+        if: ${{ always() }}
+        run: ls -lR playwright-report || echo "playwright-report folder not found"
+
       - name: Prepare Playwright report for Pages
-        if: ${{ github.ref == 'refs/heads/main' && always() && success() || true }}
+        if: ${{ github.ref == 'refs/heads/main' && always() }}
         run: |
+          rm -rf site
           if [ -d "playwright-report" ]; then
             mkdir -p site
             cp -r playwright-report/* site/
+            echo "Copied playwright-report to site"
           else
             echo "No report found; skipping site preparation."
           fi
+
+      - name: List site folder contents
+        if: ${{ github.ref == 'refs/heads/main' && always() }}
+        run: ls -lR site
 
       - name: Upload artifact for Pages
         if: ${{ github.ref == 'refs/heads/main' && always() }}
