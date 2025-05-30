@@ -53,30 +53,29 @@ jobs:
         run: ls -lR playwright-report || echo "playwright-report folder not found"
 
       - name: Prepare Playwright report for Pages
-        if: ${{ always() }}
+        if: ${{ github.ref == 'refs/heads/main' && always() }}
         run: |
-          BRANCH_NAME="${{ github.ref_name }}"
-          echo "Deploying report to site/$BRANCH_NAME"
           rm -rf site
           if [ -d "playwright-report" ]; then
-            mkdir -p "site/$BRANCH_NAME"
-            cp -r playwright-report/* "site/$BRANCH_NAME/"
-            echo "Copied playwright-report to site/$BRANCH_NAME"
+            mkdir -p site/main
+            cp -r playwright-report/* site/main/
+            echo "Copied playwright-report to site/main"
           else
             echo "No report found; skipping site preparation."
           fi
 
       - name: List site folder contents
-        if: ${{ always() }}
-        run: ls -lR site || echo "site folder not found"
+        if: ${{ github.ref == 'refs/heads/main' && always() }}
+        run: ls -lR site
 
       - name: Upload artifact for Pages
-        if: ${{ always() }}
+        if: ${{ github.ref == 'refs/heads/main' && always() }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
   deploy:
+    if: ${{ github.ref == 'refs/heads/main' && always() }}
     needs: test
     runs-on: ubuntu-latest
     environment:
