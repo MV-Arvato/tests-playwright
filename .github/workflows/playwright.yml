@@ -53,16 +53,19 @@ jobs:
         run: ls -lR playwright-report || echo "playwright-report folder not found"
 
       - name: Prepare Playwright report for Pages
-        if: ${{ github.ref == 'refs/heads/main' && always() }}
+        if: ${{ always() }}
         run: |
+          BRANCH_NAME="${GITHUB_REF##*/}"
+          echo "Deploying report to site/$BRANCH_NAME"
           rm -rf site
           if [ -d "playwright-report" ]; then
-            mkdir -p site
-            cp -r playwright-report/* site/
-            echo "Copied playwright-report to site"
+            mkdir -p "site/$BRANCH_NAME"
+            cp -r playwright-report/* "site/$BRANCH_NAME/"
+            echo "Copied playwright-report to site/$BRANCH_NAME"
           else
             echo "No report found; skipping site preparation."
           fi
+
 
       - name: List site folder contents
         if: ${{ github.ref == 'refs/heads/main' && always() }}
