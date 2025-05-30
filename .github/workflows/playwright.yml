@@ -1,9 +1,20 @@
-name: Playwright Tests
+name: Playwright Tests and Report Deployment
+
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "playwright-report"
+  cancel-in-progress: false
+
 jobs:
   test:
     timeout-minutes: 60
@@ -11,39 +22,41 @@ jobs:
     env: 
       CI: 1
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
-    - name: Prepare report for commit
-      if: ${{ github.ref == 'refs/heads/main' }}
-      run: |
-        rm -rf temp-docs
-        mkdir -p temp-docs
-        cp -r playwright-report/* temp-docs/
-    - name: Commit report to docs/
-      if: ${{ github.ref == 'refs/heads/main' }}
-      run: |
-        git config --global user.name 'github-actions[bot]'
-        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      - uses: actions/checkout@v4
 
-        git fetch origin main
-        git checkout main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
 
-        mkdir -p docs
-        cp -r temp-docs/* docs/
-        git add docs/
-        git commit -m "Update Playwright report [skip ci]" || echo "No changes to commit"
-        git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git main
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: npx playwright test
+
+      - name: Prepare Playwright report for Pages
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          mkdir -p site
+          cp -r playwright-report/* site/
+
+      - name: Upload artifact for Pages
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
