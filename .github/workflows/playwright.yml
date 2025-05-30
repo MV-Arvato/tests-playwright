@@ -57,9 +57,9 @@ jobs:
         run: |
           rm -rf site
           if [ -d "playwright-report" ]; then
-            mkdir -p site/main
-            cp -r playwright-report/* site/main/
-            echo "Copied playwright-report to site/main"
+            mkdir -p site/
+            cp -r playwright-report/* site/
+            echo "Copied playwright-report to site/"
           else
             echo "No report found; skipping site preparation."
           fi
