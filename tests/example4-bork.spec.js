@@ -5,6 +5,6 @@ test('basic test', async ({ page }) => {
   await page.goto('https://example.com');
 
   // Assert the page title contains "Example"
-  await expect(page).toHaveTitle(/Example1/);
+  await expect(page).toHaveTitle(/Example/);
 });
 
